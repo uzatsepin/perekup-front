@@ -167,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import BalanceBadge from "../components/BalanceBadge.vue";
 import { Icon } from "@iconify/vue";
 

@@ -41,6 +41,7 @@ declare global {
   }
 }
 
+// eslint-disable-next-line
 const telegramWebApp = ref<any>(null);
 const isLoading = ref(false);
 
