@@ -99,24 +99,7 @@
         </div>
 
         <!-- Прогресс-бар состояния -->
-        <div class="mb-5">
-          <div class="flex justify-between items-center mb-1">
-            <div class="text-sm font-medium">Состояние автомобиля</div>
-            <div class="text-sm text-slate-500">{{ car.condition }}%</div>
-          </div>
-          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              class="h-full rounded-full"
-              :class="{
-                'bg-emerald-500': car.condition >= 80,
-                'bg-blue-500': car.condition >= 60 && car.condition < 80,
-                'bg-amber-500': car.condition >= 40 && car.condition < 60,
-                'bg-red-500': car.condition < 40,
-              }"
-              :style="`width: ${car.condition}%`"
-            ></div>
-          </div>
-        </div>
+        <CarConditionProgress :condition="car.condition" />
 
         <!-- Прогресс-бар популярности -->
         <div class="mb-5">
@@ -464,6 +447,10 @@ import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import BalanceBadge from "../components/BalanceBadge.vue";
 import { Icon } from "@iconify/vue";
+import { formatStatus } from "@/utils/formatStatus";
+import { getConditionClass } from "@/utils/conditionState";
+import { getConditionText } from "@/utils/conditionText";
+import CarConditionProgress from "@/components/Car/CarConditionProgress.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -913,36 +900,6 @@ const getPopularityDescription = (score: number) => {
   if (score >= 60) return "Хороший спрос, возможна продажа по рыночной цене";
   if (score >= 40) return "Средний спрос, может потребоваться снижение цены";
   return "Низкий спрос, сложная продажа, требуется значительное снижение цены";
-};
-
-// Форматирование статуса для отображения
-const formatStatus = (status: string) => {
-  switch (status) {
-    case "ready":
-      return "Готов";
-    case "repair":
-      return "Ремонт";
-    case "selling":
-      return "Продается";
-    default:
-      return status;
-  }
-};
-
-// Получение текста для состояния авто
-const getConditionText = (condition: number) => {
-  if (condition >= 80) return "Отличное";
-  if (condition >= 60) return "Хорошее";
-  if (condition >= 40) return "Среднее";
-  return "Требует ремонта";
-};
-
-// Получение класса для состояния авто
-const getConditionClass = (condition: number) => {
-  if (condition >= 80) return "text-emerald-500";
-  if (condition >= 60) return "text-blue-500";
-  if (condition >= 40) return "text-amber-500";
-  return "text-red-500";
 };
 
 // Выставление на продажу

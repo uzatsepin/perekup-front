@@ -1,277 +1,53 @@
 <template>
   <div class="pb-4">
     <!-- Шапка страницы -->
-    <div class="relative mb-6">
-      <div
-        class="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-600 h-32 -mx-4"
-      ></div>
-
-      <div class="relative pt-6 px-1">
-        <!-- Верхняя строка с заголовком и балансом -->
-        <div class="flex justify-between items-center mb-6">
-          <div class="fade-in text-white">
-            <h1 class="text-2xl font-bold">Рейтинг игроков</h1>
-            <p class="text-blue-100 text-sm">Соревнуйтесь с другими игроками</p>
-          </div>
-          <BalanceBadge :balance="5000" />
-        </div>
-
-        <!-- Моя позиция в рейтинге -->
-        <div
-          class="bg-white rounded-xl shadow-md p-4 mb-4 scale-in"
-          style="animation-delay: 0.1s"
-        >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="relative">
-                <div
-                  class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-md"
-                >
-                  <Icon icon="mdi:account" class="w-8 h-8" />
-                </div>
-                <div
-                  class="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center text-xs font-bold text-blue-600 border-2 border-blue-100 shadow-sm"
-                >
-                  {{ getMyRank() }}
-                </div>
-              </div>
-              <div class="ml-3">
-                <div class="font-bold text-slate-800">Вы</div>
-                <div class="text-xs text-slate-500">Ваше место в рейтинге</div>
-              </div>
-            </div>
-            <div class="text-right">
-              <div class="text-lg font-bold text-blue-600">
-                {{ formatValue(myStats[activeTab].value) }}
-              </div>
-              <div
-                class="flex items-center text-xs font-medium"
-                :class="getTrendClass(myStats[activeTab].trend)"
-              >
-                <Icon
-                  :icon="getTrendIcon(myStats[activeTab].trend)"
-                  class="w-3.5 h-3.5 mr-0.5"
-                />
-                {{ Math.abs(myStats[activeTab].trend) }}%
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <RatingViewHeader
+      :my-stats="myStats"
+      :active-tab="activeTab"
+      :my-rank="getMyRank()"
+    />
 
     <!-- Табы рейтинга -->
-    <div
-      class="bg-white rounded-xl shadow-md mb-5 overflow-hidden fade-in"
-      style="animation-delay: 0.2s"
-    >
-      <div class="flex border-b border-slate-100">
-        <button
-          v-for="(tab, index) in tabs"
-          :key="index"
-          @click="activeTab = index"
-          class="flex-1 py-3.5 px-2 text-center font-medium transition-colors relative"
-          :class="
-            activeTab === index ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
-          "
-        >
-          <div class="flex items-center justify-center">
-            <Icon :icon="tab.icon" class="w-5 h-5 mr-1.5" />
-            {{ tab.name }}
-          </div>
-          <div
-            v-if="activeTab === index"
-            class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
-          ></div>
-        </button>
-      </div>
-
-      <!-- Описание выбранного рейтинга -->
-      <div class="px-4 py-3 border-b border-slate-100 bg-slate-50">
-        <p class="text-sm text-slate-600">{{ tabs[activeTab].description }}</p>
-      </div>
-    </div>
+    <RatingTabs :tabs="tabs" :active-tab="activeTab" @change-tab="activeTab = $event" />
 
     <!-- Список рейтинга -->
     <div class="space-y-3 slide-up" style="animation-delay: 0.3s">
       <!-- Первое место (Особое оформление) -->
-      <div
+      <RatingTopPlayerCard
         v-if="getFilteredPlayers().length > 0"
-        class="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl shadow-md overflow-hidden border border-yellow-200"
-      >
-        <div class="p-5">
-          <div class="flex items-center">
-            <!-- Медаль первого места -->
-            <div class="flex-none relative">
-              <div
-                class="w-16 h-16 rounded-full bg-gradient-to-r from-yellow-400 to-amber-300 flex items-center justify-center shadow-md"
-              >
-                <Icon icon="mdi:trophy" class="w-9 h-9 text-white" />
-              </div>
-              <div
-                class="absolute -bottom-1 -right-1 w-7 h-7 bg-white rounded-full flex items-center justify-center text-sm font-bold text-amber-600 border-2 border-amber-200"
-              >
-                1
-              </div>
-            </div>
-
-            <!-- Информация о игроке -->
-            <div class="ml-4 flex-grow">
-              <div class="flex items-center">
-                <div class="font-bold text-lg">{{ getFilteredPlayers()[0].name }}</div>
-                <div
-                  v-if="getFilteredPlayers()[0].isMe"
-                  class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-500 text-xs rounded-full"
-                >
-                  Вы
-                </div>
-                <div
-                  v-if="getFilteredPlayers()[0].badge"
-                  class="ml-2 px-2 py-0.5 bg-amber-100 text-amber-600 text-xs rounded-full"
-                >
-                  {{ getFilteredPlayers()[0].badge }}
-                </div>
-                <div
-                  v-if="getFilteredPlayers()[0].online"
-                  class="ml-2 flex items-center text-emerald-500 text-xs"
-                >
-                  <div class="w-2 h-2 bg-emerald-500 rounded-full mr-1"></div>
-                  Онлайн
-                </div>
-              </div>
-              <div class="text-sm text-slate-600 mt-1">
-                {{ getFilteredPlayers()[0].stats[activeTab].details }}
-              </div>
-            </div>
-
-            <!-- Значение рейтинга и тренд -->
-            <div class="flex-none text-right">
-              <div
-                class="text-xl font-bold"
-                :class="{
-                  'text-blue-500': getFilteredPlayers()[0].isMe,
-                  'text-amber-600': !getFilteredPlayers()[0].isMe,
-                }"
-              >
-                {{ formatValue(getFilteredPlayers()[0].stats[activeTab].value) }}
-              </div>
-              <div
-                class="flex items-center justify-end text-sm font-medium"
-                :class="getTrendClass(getFilteredPlayers()[0].stats[activeTab].trend)"
-              >
-                <Icon
-                  :icon="getTrendIcon(getFilteredPlayers()[0].stats[activeTab].trend)"
-                  class="w-4 h-4 mr-0.5"
-                />
-                {{ Math.abs(getFilteredPlayers()[0].stats[activeTab].trend) }}%
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        :player="getFilteredPlayers()[0]"
+        :active-tab="activeTab"
+      />
 
       <!-- Остальные игроки -->
       <transition-group name="list" tag="div" class="space-y-3">
-        <div
+        <RatingPlayerCard
           v-for="(player, index) in getFilteredPlayers().slice(1)"
           :key="player.id"
-          class="bg-white rounded-xl shadow-sm overflow-hidden border"
-          :class="player.isMe ? 'border-blue-200 bg-blue-50/50' : 'border-slate-200'"
-        >
-          <div class="p-4">
-            <div class="flex items-center">
-              <!-- Место в рейтинге -->
-              <div class="flex-none relative">
-                <div
-                  class="w-12 h-12 rounded-full flex items-center justify-center shadow-sm"
-                  :class="{
-                    'bg-gradient-to-br from-gray-300 to-gray-400 text-white': index === 0,
-                    'bg-gradient-to-br from-amber-200 to-amber-300 text-white':
-                      index === 1,
-                    'bg-slate-100 text-slate-500': index > 1,
-                  }"
-                >
-                  <Icon v-if="index <= 1" icon="mdi:trophy" class="w-6 h-6" />
-                  <span v-else class="font-bold">{{ index + 2 }}</span>
-                </div>
-                <div
-                  v-if="player.online"
-                  class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"
-                ></div>
-              </div>
-
-              <!-- Информация о игроке -->
-              <div class="ml-3 flex-grow min-w-0">
-                <div class="flex items-center flex-wrap">
-                  <div class="font-medium">{{ player.name }}</div>
-                  <div
-                    v-if="player.isMe"
-                    class="ml-1.5 px-1.5 py-0.5 bg-blue-100 text-blue-500 text-xs rounded-full"
-                  >
-                    Вы
-                  </div>
-                  <div
-                    v-if="player.badge"
-                    class="ml-1.5 px-1.5 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full"
-                  >
-                    {{ player.badge }}
-                  </div>
-                </div>
-                <div class="text-xs text-slate-500 mt-0.5">
-                  {{ player.stats[activeTab].details }}
-                </div>
-              </div>
-
-              <!-- Значение рейтинга и тренд -->
-              <div class="flex-none text-right">
-                <div class="font-bold" :class="{ 'text-blue-500': player.isMe }">
-                  {{ formatValue(player.stats[activeTab].value) }}
-                </div>
-                <div
-                  class="flex items-center justify-end text-xs font-medium"
-                  :class="getTrendClass(player.stats[activeTab].trend)"
-                >
-                  <Icon
-                    :icon="getTrendIcon(player.stats[activeTab].trend)"
-                    class="w-3.5 h-3.5 mr-0.5"
-                  />
-                  {{ Math.abs(player.stats[activeTab].trend) }}%
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          :player="player"
+          :index="index"
+          :active-tab="activeTab"
+          :position="index + 2"
+        />
       </transition-group>
 
       <!-- Пустой рейтинг (если нет данных) -->
-      <div
-        v-if="getFilteredPlayers().length === 0"
-        class="bg-white rounded-xl shadow-md p-12 text-center"
-      >
-        <div
-          class="mx-auto w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4"
-        >
-          <Icon icon="mdi:trophy-outline" class="w-10 h-10 text-slate-400" />
-        </div>
-        <h3 class="text-lg font-medium mb-2">Рейтинг пуст</h3>
-        <p class="text-slate-500 mb-6">Станьте первым в этом рейтинге!</p>
-        <button
-          class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors duration-200"
-        >
-          Начать игру
-        </button>
-      </div>
+      <RatingEmptyState v-if="getFilteredPlayers().length === 0" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import BalanceBadge from "../components/BalanceBadge.vue";
-import { Icon } from "@iconify/vue";
+import { ref } from "vue";
+import RatingViewHeader from "@/components/Rating/RatingViewHeader.vue";
+import RatingTabs from "@/components/Rating/RatingTabs.vue";
+import RatingTopPlayerCard from "@/components/Rating/RatingTopPlayerCard.vue";
+import RatingPlayerCard from "@/components/Rating/RatingPlayerCard.vue";
+import RatingEmptyState from "@/components/Rating/RatingEmptyState.vue";
+import type { Player, PlayerStats, Tab } from "@/types/rating";
 
 // Определение табов
-const tabs = [
+const tabs: Tab[] = [
   {
     name: "Продажи",
     icon: "mdi:car-multiple",
@@ -293,14 +69,14 @@ const tabs = [
 const activeTab = ref(0);
 
 // Мои статистические данные
-const myStats = [
+const myStats: PlayerStats[] = [
   { value: 42, trend: 5 }, // Продажи
   { value: 15650, trend: -3 }, // Прибыль
   { value: 76240, trend: 12 }, // Капитал
 ];
 
 // Данные игроков
-const players = ref([
+const players = ref<Player[]>([
   {
     id: 1,
     name: "Алексей Перекупов",
@@ -411,29 +187,6 @@ const getMyRank = () => {
   }
   return "-";
 };
-
-// Форматирование значения в зависимости от типа рейтинга
-const formatValue = (value: number) => {
-  if (activeTab.value === 0) {
-    return value.toLocaleString(); // Количество продаж
-  } else {
-    return `$${value.toLocaleString()}`; // Денежные значения
-  }
-};
-
-// Получение класса для тренда (положительный/отрицательный/нейтральный)
-const getTrendClass = (trend: number) => {
-  if (trend > 0) return "text-emerald-500";
-  if (trend < 0) return "text-red-500";
-  return "text-slate-500";
-};
-
-// Получение иконки для тренда
-const getTrendIcon = (trend: number) => {
-  if (trend > 0) return "mdi:arrow-up-bold";
-  if (trend < 0) return "mdi:arrow-down-bold";
-  return "mdi:minus";
-};
 </script>
 
 <style scoped>
@@ -446,20 +199,5 @@ const getTrendIcon = (trend: number) => {
 .list-leave-to {
   opacity: 0;
   transform: translateY(20px);
-}
-
-/* Дополнительные анимации для элементов списка */
-@keyframes pulse-light {
-  0%,
-  100% {
-    background-color: transparent;
-  }
-  50% {
-    background-color: rgba(59, 130, 246, 0.05);
-  }
-}
-
-.highlight-new {
-  animation: pulse-light 2s ease;
 }
 </style>

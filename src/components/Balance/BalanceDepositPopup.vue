@@ -79,6 +79,7 @@
 </template>
 
 <script setup lang="ts">
+import { Icon } from "@iconify/vue";
 import { useBalanceStore } from "@/stores/balance";
 import { computed } from "vue";
 

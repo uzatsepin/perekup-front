@@ -58,6 +58,8 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { Icon } from "@iconify/vue";
+import { getLevelBadgeClass } from "@/utils/getLevelBadgeClass";
+import { getLevelText } from "@/utils/getLevelText";
 const router = useRouter();
 
 const props = defineProps({
@@ -66,32 +68,6 @@ const props = defineProps({
     required: true,
   },
 });
-
-const getLevelText = (level: string) => {
-  switch (level) {
-    case "premium":
-      return "Премиум";
-    case "standard":
-      return "Стандарт";
-    case "economy":
-      return "Эконом";
-    default:
-      return level;
-  }
-};
-
-const getLevelBadgeClass = (level: string) => {
-  switch (level) {
-    case "premium":
-      return "bg-indigo-100 text-indigo-600";
-    case "standard":
-      return "bg-blue-100 text-blue-600";
-    case "economy":
-      return "bg-emerald-100 text-emerald-600";
-    default:
-      return "bg-slate-100 text-slate-600";
-  }
-};
 
 const goToDealership = (dealershipId: number) => {
   router.push(`/market/dealership/${dealershipId}`);

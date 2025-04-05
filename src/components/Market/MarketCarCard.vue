@@ -43,6 +43,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { Icon } from "@iconify/vue";
+import { getConditionText } from "@/utils/conditionText";
 
 const router = useRouter();
 const props = defineProps({
@@ -57,13 +58,6 @@ const getConditionClass = (condition: number) => {
   if (condition >= 60) return "text-blue-500";
   if (condition >= 40) return "text-amber-500";
   return "text-red-500";
-};
-
-const getConditionText = (condition: number) => {
-  if (condition >= 80) return "Отличное";
-  if (condition >= 60) return "Хорошее";
-  if (condition >= 40) return "Среднее";
-  return "Требует ремонта";
 };
 
 const goToCarDetails = (carId: number) => {

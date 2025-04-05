@@ -13,22 +13,18 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import { useRouter } from "vue-router";
+import { formatNumber } from "@/utils/formatNumber";
+import { useBalanceStore } from "@/stores/balance";
+import { computed } from "vue";
 
 const router = useRouter();
 
-const props = defineProps({
-  balance: {
-    type: Number,
-    required: true,
-  },
+const balanceStore = useBalanceStore();
+const balance = computed(() => {
+  return balanceStore.balance;
 });
 
 const navigateToBalance = () => {
   router.push("/balance");
-};
-
-// Форматирование числа для отображения с разделителями
-const formatNumber = (num: number) => {
-  return num.toLocaleString("en-US");
 };
 </script>

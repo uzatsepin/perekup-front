@@ -12,193 +12,36 @@
     </div>
 
     <!-- Профиль пользователя -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6 fade-in">
-      <!-- Шапка профиля с обложкой -->
-      <div class="relative">
-        <div class="h-32 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
-        <div class="absolute top-14 left-1/2 transform -translate-x-1/2">
-          <div class="relative">
-            <div
-              class="w-24 h-24 rounded-full border-4 border-white bg-white overflow-hidden"
-            >
-              <img
-                :src="
-                  userAvatar ||
-                  'https://ui-avatars.com/api/?name=' + encodeURIComponent(playerName)
-                "
-                alt="Аватар"
-                class="w-full h-full object-cover"
-              />
-            </div>
-            <button
-              class="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center border-2 border-white"
-            >
-              <Icon icon="mdi:camera" class="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Информация о пользователе -->
-      <div class="pt-14 px-4 pb-4 text-center">
-        <h1 class="text-xl font-bold">{{ playerName }}</h1>
-        <div class="flex items-center justify-center">
-          <span class="text-sm text-slate-500">{{ playerTitle }}</span>
-          <div class="w-2 h-2 rounded-full bg-slate-300 mx-2"></div>
-          <div class="flex items-center text-sm text-blue-500">
-            <Icon icon="mdi:star" class="h-4 w-4 mr-0.5 text-amber-400" />
-            <span>Уровень {{ userLevel }}</span>
-          </div>
-        </div>
-
-        <!-- Прогресс уровня -->
-        <div class="mt-3 mb-4">
-          <div class="flex justify-between text-xs text-slate-500 mb-1">
-            <span>{{ xpProgress.current }} XP</span>
-            <span>{{ xpProgress.max }} XP</span>
-          </div>
-          <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              class="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
-              :style="`width: ${(xpProgress.current / xpProgress.max) * 100}%`"
-            ></div>
-          </div>
-        </div>
-
-        <!-- Кнопки действий -->
-        <div class="flex space-x-3">
-          <button
-            @click="claimDailyBonus"
-            class="flex-1 flex items-center justify-center py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg"
-            :class="dailyBonusAvailable ? 'pulse' : 'opacity-50'"
-            :disabled="!dailyBonusAvailable"
-          >
-            <Icon icon="mdi:gift" class="h-5 w-5 mr-1.5" />
-            <span class="text-sm">Ежедневный бонус</span>
-          </button>
-          <button
-            @click="router.push('/rating')"
-            class="flex-1 flex items-center justify-center py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg"
-          >
-            <Icon icon="mdi:trophy" class="h-5 w-5 mr-1.5" />
-            <span class="text-sm">Рейтинг</span>
-          </button>
-        </div>
-      </div>
-    </div>
+    <ProfilePlayerInfo
+      :playerName="playerName"
+      :playerTitle="playerTitle"
+      :userAvatar="userAvatar"
+      :userLevel="userLevel"
+      :xpProgress="xpProgress"
+      @claimDailyBonus="claimDailyBonus"
+    />
 
     <!-- Статистика профиля -->
     <div class="grid grid-cols-2 gap-3 mb-6 slide-up">
-      <div
+      <ProfileStatsItem
         v-for="(stat, index) in userStats"
         :key="index"
-        class="bg-white p-3 rounded-lg shadow-md flex"
-        :style="`animation-delay: ${0.1 * index}s`"
-      >
-        <div
-          class="w-12 h-12 rounded-full flex items-center justify-center mr-3"
-          :class="stat.bgColor"
-        >
-          <Icon :icon="stat.icon" class="w-6 h-6" :class="stat.iconColor" />
-        </div>
-        <div>
-          <div class="font-bold text-lg">{{ stat.value }}</div>
-          <div class="text-xs text-slate-500">{{ stat.label }}</div>
-        </div>
-      </div>
+        :stat="stat"
+        :index="index"
+      />
     </div>
 
     <!-- История действий -->
     <ProfileHistory />
+
     <!-- Модальное окно настроек -->
-    <div
-      v-if="showSettings"
-      class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-      @click.self="showSettings = false"
-    >
-      <div class="bg-white rounded-lg w-full max-w-sm p-5 scale-in">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-bold text-lg">Настройки</h3>
-          <button
-            @click="showSettings = false"
-            class="text-slate-400 hover:text-slate-600"
-          >
-            <Icon icon="mdi:close" class="h-5 w-5" />
-          </button>
-        </div>
-
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1"
-              >Имя игрока</label
-            >
-            <input
-              v-model="playerName"
-              type="text"
-              class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Тема</label>
-            <div class="grid grid-cols-2 gap-3">
-              <button
-                class="py-2 border rounded-md flex justify-center items-center"
-                :class="
-                  currentTheme === 'light'
-                    ? 'border-blue-500 text-blue-500'
-                    : 'border-slate-300 text-slate-700'
-                "
-                @click="setTheme('light')"
-              >
-                <Icon icon="mdi:white-balance-sunny" class="h-4 w-4 mr-1" />
-                Светлая
-              </button>
-              <button
-                class="py-2 border rounded-md flex justify-center items-center"
-                :class="
-                  currentTheme === 'dark'
-                    ? 'border-blue-500 text-blue-500'
-                    : 'border-slate-300 text-slate-700'
-                "
-                @click="setTheme('dark')"
-              >
-                <Icon icon="mdi:moon-waning-crescent" class="h-4 w-4 mr-1" />
-                Тёмная
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1"
-              >Уведомления</label
-            >
-            <div class="flex items-center">
-              <div class="flex-grow">
-                <div class="font-medium text-sm">Ежедневный бонус</div>
-                <div class="text-xs text-slate-500">Уведомлять, когда доступен бонус</div>
-              </div>
-              <div>
-                <button
-                  class="w-12 h-6 rounded-full transition-colors duration-200"
-                  :class="notifications.dailyBonus ? 'bg-blue-500' : 'bg-slate-300'"
-                  @click="notifications.dailyBonus = !notifications.dailyBonus"
-                >
-                  <div
-                    class="w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-200"
-                    :class="notifications.dailyBonus ? 'translate-x-6' : 'translate-x-1'"
-                  ></div>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <button class="w-full py-2 bg-blue-500 text-white rounded-lg">
-            Сохранить настройки
-          </button>
-        </div>
-      </div>
-    </div>
+    <ProfileSettingsPopup
+      v-model="showSettings"
+      v-model:playerName="playerName"
+      v-model:currentTheme="currentTheme"
+      v-model:notifications="notifications"
+      @save="saveUserSettings"
+    />
 
     <!-- Всплывающее уведомление о бонусе -->
     <div
@@ -217,6 +60,9 @@ import { useRouter } from "vue-router";
 import BalanceBadge from "../components/BalanceBadge.vue";
 import { Icon } from "@iconify/vue";
 import ProfileHistory from "@/components/Profile/ProfileHistory.vue";
+import ProfilePlayerInfo from "@/components/Profile/ProfilePlayerInfo.vue";
+import ProfileSettingsPopup from "@/components/Profile/ProfileSettingsPopup.vue";
+import ProfileStatsItem from "@/components/Profile/ProfileStatsItem.vue";
 
 const router = useRouter();
 
@@ -304,16 +150,6 @@ const claimDailyBonus = () => {
     userBalance.value += 500;
     dailyBonusAvailable.value = false;
 
-    // Добавляем в историю
-    // activityHistory.unshift({
-    //   title: "Получен ежедневный бонус",
-    //   description: "Ежедневный бонус $500",
-    //   date: new Date(),
-    //   icon: "mdi:gift",
-    //   bgColor: "bg-indigo-100",
-    //   iconColor: "text-indigo-500",
-    // });
-
     // Показываем уведомление
     showBonusNotification.value = true;
     setTimeout(() => {
@@ -325,5 +161,14 @@ const claimDailyBonus = () => {
 const setTheme = (theme: string) => {
   currentTheme.value = theme;
   // В реальном приложении здесь бы применялась тема
+};
+
+const saveUserSettings = () => {
+  // Здесь можно добавить сохранение настроек на сервер
+  console.log("Настройки сохранены", {
+    playerName: playerName.value,
+    theme: currentTheme.value,
+    notifications: notifications.value,
+  });
 };
 </script>

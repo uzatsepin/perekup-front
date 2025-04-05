@@ -2,10 +2,7 @@
   <div class="py-4">
     <!-- Верхняя панель с возвратом и балансом -->
     <div class="flex justify-between items-center mb-4">
-      <button
-        @click="router.back()"
-        class="flex items-center text-slate-600 font-medium"
-      >
+      <button @click="router.back()" class="flex items-center text-slate-600 font-medium">
         <Icon icon="mdi:arrow-left" class="h-5 w-5 mr-1" />
         Назад
       </button>
@@ -32,7 +29,9 @@
         </div>
 
         <!-- Бейдж популярности -->
-        <div class="absolute top-3 left-3 px-2 py-1 bg-black/70 text-white text-xs rounded-full flex items-center">
+        <div
+          class="absolute top-3 left-3 px-2 py-1 bg-black/70 text-white text-xs rounded-full flex items-center"
+        >
           <Icon icon="mdi:star" class="w-3.5 h-3.5 mr-1 text-amber-400" />
           {{ car.popularityScore }}% популярность
         </div>
@@ -45,23 +44,29 @@
             <h1 class="text-xl font-bold">{{ car.brand }} {{ car.model }}</h1>
             <p class="text-slate-500">{{ car.year }} год</p>
           </div>
-          <div class="text-2xl font-bold text-blue-600">${{ car.price.toLocaleString() }}</div>
+          <div class="text-2xl font-bold text-blue-600">
+            ${{ car.price.toLocaleString() }}
+          </div>
         </div>
 
         <!-- Основные характеристики -->
         <div class="grid grid-cols-2 gap-4 mb-4">
           <div class="flex items-center">
-            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-blue-500 mr-3">
+            <div
+              class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-blue-500 mr-3"
+            >
               <Icon icon="mdi:speedometer" class="w-5 h-5" />
             </div>
             <div>
               <div class="text-xs text-slate-500">Пробег</div>
-              <div class="font-medium">{{ formatMileage(car.mileage) }} км</div>
+              <div class="font-medium">{{ car.mileage }} км</div>
             </div>
           </div>
 
           <div class="flex items-center">
-            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-blue-500 mr-3">
+            <div
+              class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-blue-500 mr-3"
+            >
               <Icon icon="mdi:car-wrench" class="w-5 h-5" />
             </div>
             <div>
@@ -72,39 +77,18 @@
             </div>
           </div>
         </div>
-
         <!-- Прогресс-бар состояния -->
-        <div class="mb-6">
-          <div class="flex justify-between items-center mb-1">
-            <div class="text-sm font-medium">Состояние автомобиля</div>
-            <div class="text-sm text-slate-500">{{ car.condition }}%</div>
-          </div>
-          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              class="h-full rounded-full"
-              :class="{
-                'bg-emerald-500': car.condition >= 80,
-                'bg-blue-500': car.condition >= 60 && car.condition < 80,
-                'bg-amber-500': car.condition >= 40 && car.condition < 60,
-                'bg-red-500': car.condition < 40
-              }"
-              :style="`width: ${car.condition}%`"
-            ></div>
-          </div>
-        </div>
+        <CarConditionProgress :condition="car.condition" />
 
         <!-- Проблемы и поломки -->
         <div v-if="car.issues && car.issues.length > 0" class="mb-6">
           <h3 class="font-medium mb-2">Выявленные проблемы</h3>
           <ul class="space-y-2">
-            <li
-              v-for="(issue, i) in car.issues"
-              :key="i"
-              class="bg-red-50 p-3 rounded-lg flex items-start"
-            >
-              <Icon icon="mdi:alert-circle" class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
-              <span class="text-sm">{{ issue }}</span>
-            </li>
+            <CarProblemsItem
+              v-for="(issue, index) in car.issues"
+              :key="index"
+              :issue="issue"
+            />
           </ul>
         </div>
 
@@ -118,17 +102,26 @@
             </div>
             <div class="flex justify-between">
               <span class="text-sm text-slate-600">Оценочная стоимость ремонта:</span>
-              <span class="text-sm font-medium">${{ estimateRepairCost(car).toLocaleString() }}</span>
+              <span class="text-sm font-medium"
+                >${{ estimateRepairCost(car).toLocaleString() }}</span
+              >
             </div>
             <div class="flex justify-between">
               <span class="text-sm text-slate-600">Рыночная цена после ремонта:</span>
-              <span class="text-sm font-medium">${{ estimateMarketValue(car).toLocaleString() }}</span>
+              <span class="text-sm font-medium"
+                >${{ estimateMarketValue(car).toLocaleString() }}</span
+              >
             </div>
             <div class="border-t border-slate-200 pt-2 mt-2">
               <div class="flex justify-between">
                 <span class="text-sm text-slate-600">Потенциальная прибыль:</span>
                 <span class="text-sm font-medium text-emerald-600">
-                  +${{ Math.max(0, estimateMarketValue(car) - car.price - estimateRepairCost(car)).toLocaleString() }}
+                  +${{
+                    Math.max(
+                      0,
+                      estimateMarketValue(car) - car.price - estimateRepairCost(car)
+                    ).toLocaleString()
+                  }}
                 </span>
               </div>
             </div>
@@ -148,7 +141,9 @@
 
     <!-- Если автомобиль не найден -->
     <div v-else class="bg-white rounded-lg shadow-md p-8 text-center fade-in">
-      <div class="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3">
+      <div
+        class="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3"
+      >
         <Icon icon="mdi:car-off" class="w-8 h-8 text-slate-400" />
       </div>
       <h3 class="font-medium mb-1">Автомобиль не найден</h3>
@@ -165,11 +160,15 @@
     </div>
 
     <!-- Модальное окно подтверждения покупки -->
-    <div v-if="showConfirmModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div
+      v-if="showConfirmModal"
+      class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+    >
       <div class="bg-white rounded-lg w-full max-w-sm p-5 scale-in">
         <h3 class="font-bold text-lg mb-2">Подтверждение покупки</h3>
         <p class="text-slate-600 mb-4">
-          Вы собираетесь приобрести {{ car?.brand }} {{ car?.model }} ({{ car?.year }}) за ${{ car?.price.toLocaleString() }}
+          Вы собираетесь приобрести {{ car?.brand }} {{ car?.model }} ({{ car?.year }}) за
+          ${{ car?.price.toLocaleString() }}
         </p>
         <div class="flex space-x-3">
           <button
@@ -192,10 +191,14 @@
 
 <script setup lang="ts">
 // Страница с карточкой автомобиля на продаже - из автосалона или авторынка
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import BalanceBadge from '../components/BalanceBadge.vue';
-import { Icon } from '@iconify/vue';
+import { ref, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import BalanceBadge from "../components/BalanceBadge.vue";
+import { Icon } from "@iconify/vue";
+import { getConditionText } from "@/utils/conditionText";
+import { getConditionClass } from "@/utils/conditionState";
+import CarProblemsItem from "@/components/Car/CarProblemsItem.vue";
+import CarConditionProgress from "@/components/Car/CarConditionProgress.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -232,33 +235,13 @@ onMounted(() => {
       condition: 75,
       mileage: 120000,
       price: 12000,
-      photoUrl: "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dG95b3RhJTIwY2Ftcnl8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60",
+      photoUrl:
+        "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dG95b3RhJTIwY2Ftcnl8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=800&q=60",
       popularityScore: 78,
-      issues: ["Легкие царапины на бампере", "Требуется замена масла"]
+      issues: ["Легкие царапины на бампере", "Требуется замена масла"],
     };
   }, 500);
 });
-
-// Форматирование пробега с разделением тысяч
-const formatMileage = (mileage: number) => {
-  return mileage.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-};
-
-// Получение текста для состояния авто
-const getConditionText = (condition: number) => {
-  if (condition >= 80) return "Отличное";
-  if (condition >= 60) return "Хорошее";
-  if (condition >= 40) return "Среднее";
-  return "Требует ремонта";
-};
-
-// Получение класса для состояния авто
-const getConditionClass = (condition: number) => {
-  if (condition >= 80) return "text-emerald-500";
-  if (condition >= 60) return "text-blue-500";
-  if (condition >= 40) return "text-amber-500";
-  return "text-red-500";
-};
 
 // Расчет стоимости ремонта на основе состояния и выявленных проблем
 const estimateRepairCost = (car: Car) => {
@@ -290,6 +273,6 @@ const purchaseCar = () => {
   showConfirmModal.value = false;
 
   // Перенаправление в гараж
-  router.push('/garage');
+  router.push("/garage");
 };
 </script>

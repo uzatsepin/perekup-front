@@ -8,12 +8,7 @@
         <BalanceTotal />
       </template>
     </Header>
-
-    <!-- Выбор периода и фильтры -->
-
     <BalanceTrasactions />
-
-    <!-- Модальное окно пополнения баланса -->
     <BalanceDepositPopup />
   </div>
 </template>

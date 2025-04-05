@@ -5,7 +5,7 @@ export const useBalanceStore = defineStore('balance', () => {
 	const showTopUpModal = ref(false)
 	const topUpMethod = ref('stars')
 	const topUpAmount = ref(10)
-	const balance = ref(5000)
+	const balance = ref(6000)
 
 	const openTopUpModal = () => {
 		showTopUpModal.value = true

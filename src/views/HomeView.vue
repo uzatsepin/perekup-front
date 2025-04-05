@@ -13,16 +13,7 @@
             <h1 class="text-2xl font-bold">Привет, Игрок!</h1>
             <p class="text-blue-100 text-sm">Твой бизнес автоперекупа ждёт</p>
           </div>
-          <BalanceBadge :balance="5000" />
-          <!-- <div
-            class="bg-white/15 backdrop-blur-md px-4 py-2 rounded-full text-white shadow-lg border border-white/20 scale-in"
-          >
-            <div class="text-xs text-blue-100">Баланс</div>
-            <div class="font-bold text-xl flex items-center">
-              <Icon icon="mdi:currency-usd" class="mr-1" />
-              {{ balance.toLocaleString() }}
-            </div>
-          </div> -->
+          <BalanceBadge />
         </div>
 
         <!-- Карточка с краткой информацией о профиле -->
@@ -227,7 +218,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { Icon } from "@iconify/vue";
 import BalanceBadge from "@/components/BalanceBadge.vue";
@@ -235,7 +226,6 @@ import BalanceBadge from "@/components/BalanceBadge.vue";
 const router = useRouter();
 
 // Данные пользователя
-const balance = ref(5000);
 const level = ref(5);
 const xp = ref(432);
 const nextLevelXp = ref(1000);
@@ -294,6 +284,4 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
-/* Дополнительная стилизация при необходимости */
-</style>
+<style scoped></style>
