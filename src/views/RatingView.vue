@@ -1,173 +1,272 @@
 <template>
-  <div class="py-4">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">Рейтинг игроков</h1>
-      <BalanceBadge :balance="5000" />
+  <div class="pb-4">
+    <!-- Шапка страницы -->
+    <div class="relative mb-6">
+      <div
+        class="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-600 h-32 -mx-4"
+      ></div>
+
+      <div class="relative pt-6 px-1">
+        <!-- Верхняя строка с заголовком и балансом -->
+        <div class="flex justify-between items-center mb-6">
+          <div class="fade-in text-white">
+            <h1 class="text-2xl font-bold">Рейтинг игроков</h1>
+            <p class="text-blue-100 text-sm">Соревнуйтесь с другими игроками</p>
+          </div>
+          <BalanceBadge :balance="5000" />
+        </div>
+
+        <!-- Моя позиция в рейтинге -->
+        <div
+          class="bg-white rounded-xl shadow-md p-4 mb-4 scale-in"
+          style="animation-delay: 0.1s"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <div class="relative">
+                <div
+                  class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-md"
+                >
+                  <Icon icon="mdi:account" class="w-8 h-8" />
+                </div>
+                <div
+                  class="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center text-xs font-bold text-blue-600 border-2 border-blue-100 shadow-sm"
+                >
+                  {{ getMyRank() }}
+                </div>
+              </div>
+              <div class="ml-3">
+                <div class="font-bold text-slate-800">Вы</div>
+                <div class="text-xs text-slate-500">Ваше место в рейтинге</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-lg font-bold text-blue-600">
+                {{ formatValue(myStats[activeTab].value) }}
+              </div>
+              <div
+                class="flex items-center text-xs font-medium"
+                :class="getTrendClass(myStats[activeTab].trend)"
+              >
+                <Icon
+                  :icon="getTrendIcon(myStats[activeTab].trend)"
+                  class="w-3.5 h-3.5 mr-0.5"
+                />
+                {{ Math.abs(myStats[activeTab].trend) }}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Табы рейтинга -->
-    <div class="bg-white rounded-lg shadow-md mb-4 overflow-hidden">
-      <div class="flex border-b">
+    <div
+      class="bg-white rounded-xl shadow-md mb-5 overflow-hidden fade-in"
+      style="animation-delay: 0.2s"
+    >
+      <div class="flex border-b border-slate-100">
         <button
           v-for="(tab, index) in tabs"
           :key="index"
           @click="activeTab = index"
-          class="flex-1 py-3 px-2 text-center text-sm font-medium transition-colors duration-200"
+          class="flex-1 py-3.5 px-2 text-center font-medium transition-colors relative"
           :class="
-            activeTab === index
-              ? 'text-blue-500 border-b-2 border-blue-500'
-              : 'text-slate-500 hover:text-slate-700'
+            activeTab === index ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
           "
         >
           <div class="flex items-center justify-center">
-            <Icon :icon="tab.icon" class="w-4 h-4 mr-1.5" />
+            <Icon :icon="tab.icon" class="w-5 h-5 mr-1.5" />
             {{ tab.name }}
           </div>
+          <div
+            v-if="activeTab === index"
+            class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
+          ></div>
         </button>
       </div>
-    </div>
 
-    <!-- Показатели топ игроков (карточка с моим местом) -->
-    <div class="bg-white rounded-lg shadow-md p-4 mb-4">
-      <div class="flex justify-between items-center">
-        <div class="flex items-center">
-          <div class="relative">
-            <div
-              class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 border-2 border-blue-200"
-            >
-              <Icon icon="mdi:account-circle" class="w-8 h-8" />
-            </div>
-            <div
-              class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center text-xs font-bold text-blue-500 border border-blue-200"
-            >
-              42
-            </div>
-          </div>
-          <div class="ml-3">
-            <div class="font-bold">Вы</div>
-            <div class="text-xs text-slate-500">Ваше место в рейтинге</div>
-          </div>
-        </div>
-        <div class="text-right">
-          <div class="text-lg font-bold text-blue-500">
-            {{ formatValue(myStats[activeTab].value) }}
-          </div>
-          <div
-            class="flex items-center text-xs font-medium"
-            :class="getTrendClass(myStats[activeTab].trend)"
-          >
-            <Icon :icon="getTrendIcon(myStats[activeTab].trend)" class="w-3 h-3 mr-0.5" />
-            {{ Math.abs(myStats[activeTab].trend) }}%
-          </div>
-        </div>
+      <!-- Описание выбранного рейтинга -->
+      <div class="px-4 py-3 border-b border-slate-100 bg-slate-50">
+        <p class="text-sm text-slate-600">{{ tabs[activeTab].description }}</p>
       </div>
     </div>
 
     <!-- Список рейтинга -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-      <!-- Заголовок списка -->
-      <div class="bg-gray-50 px-4 py-3 border-b">
-        <h3 class="font-medium">Топ игроков</h3>
-        <p class="text-xs text-gray-500">{{ tabs[activeTab].description }}</p>
+    <div class="space-y-3 slide-up" style="animation-delay: 0.3s">
+      <!-- Первое место (Особое оформление) -->
+      <div
+        v-if="getFilteredPlayers().length > 0"
+        class="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl shadow-md overflow-hidden border border-yellow-200"
+      >
+        <div class="p-5">
+          <div class="flex items-center">
+            <!-- Медаль первого места -->
+            <div class="flex-none relative">
+              <div
+                class="w-16 h-16 rounded-full bg-gradient-to-r from-yellow-400 to-amber-300 flex items-center justify-center shadow-md"
+              >
+                <Icon icon="mdi:trophy" class="w-9 h-9 text-white" />
+              </div>
+              <div
+                class="absolute -bottom-1 -right-1 w-7 h-7 bg-white rounded-full flex items-center justify-center text-sm font-bold text-amber-600 border-2 border-amber-200"
+              >
+                1
+              </div>
+            </div>
+
+            <!-- Информация о игроке -->
+            <div class="ml-4 flex-grow">
+              <div class="flex items-center">
+                <div class="font-bold text-lg">{{ getFilteredPlayers()[0].name }}</div>
+                <div
+                  v-if="getFilteredPlayers()[0].isMe"
+                  class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-500 text-xs rounded-full"
+                >
+                  Вы
+                </div>
+                <div
+                  v-if="getFilteredPlayers()[0].badge"
+                  class="ml-2 px-2 py-0.5 bg-amber-100 text-amber-600 text-xs rounded-full"
+                >
+                  {{ getFilteredPlayers()[0].badge }}
+                </div>
+                <div
+                  v-if="getFilteredPlayers()[0].online"
+                  class="ml-2 flex items-center text-emerald-500 text-xs"
+                >
+                  <div class="w-2 h-2 bg-emerald-500 rounded-full mr-1"></div>
+                  Онлайн
+                </div>
+              </div>
+              <div class="text-sm text-slate-600 mt-1">
+                {{ getFilteredPlayers()[0].stats[activeTab].details }}
+              </div>
+            </div>
+
+            <!-- Значение рейтинга и тренд -->
+            <div class="flex-none text-right">
+              <div
+                class="text-xl font-bold"
+                :class="{
+                  'text-blue-500': getFilteredPlayers()[0].isMe,
+                  'text-amber-600': !getFilteredPlayers()[0].isMe,
+                }"
+              >
+                {{ formatValue(getFilteredPlayers()[0].stats[activeTab].value) }}
+              </div>
+              <div
+                class="flex items-center justify-end text-sm font-medium"
+                :class="getTrendClass(getFilteredPlayers()[0].stats[activeTab].trend)"
+              >
+                <Icon
+                  :icon="getTrendIcon(getFilteredPlayers()[0].stats[activeTab].trend)"
+                  class="w-4 h-4 mr-0.5"
+                />
+                {{ Math.abs(getFilteredPlayers()[0].stats[activeTab].trend) }}%
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Список игроков -->
-      <transition-group name="list" tag="div">
+      <!-- Остальные игроки -->
+      <transition-group name="list" tag="div" class="space-y-3">
         <div
-          v-for="(player, index) in getFilteredPlayers()"
+          v-for="(player, index) in getFilteredPlayers().slice(1)"
           :key="player.id"
-          class="flex items-center px-4 py-3 border-b relative"
-          :class="{ 'bg-blue-50': player.isMe }"
+          class="bg-white rounded-xl shadow-sm overflow-hidden border"
+          :class="player.isMe ? 'border-blue-200 bg-blue-50/50' : 'border-slate-200'"
         >
-          <!-- Номер в рейтинге (с медалями) -->
-          <div class="flex-none w-8 text-center">
-            <div
-              v-if="index === 0"
-              class="w-7 h-7 mx-auto bg-yellow-100 rounded-full flex items-center justify-center"
-            >
-              <Icon icon="mdi:trophy" class="w-4 h-4 text-yellow-500" />
-            </div>
-            <div
-              v-else-if="index === 1"
-              class="w-7 h-7 mx-auto bg-gray-100 rounded-full flex items-center justify-center"
-            >
-              <Icon icon="mdi:trophy" class="w-4 h-4 text-gray-500" />
-            </div>
-            <div
-              v-else-if="index === 2"
-              class="w-7 h-7 mx-auto bg-amber-100 rounded-full flex items-center justify-center"
-            >
-              <Icon icon="mdi:trophy" class="w-4 h-4 text-amber-600" />
-            </div>
-            <div v-else class="text-sm font-bold text-gray-500">{{ index + 1 }}</div>
-          </div>
-
-          <!-- Аватар игрока -->
-          <div class="ml-2 relative">
-            <div
-              class="w-10 h-10 rounded-full bg-cover bg-center"
-              :style="`background-image: url(${player.avatar})`"
-            ></div>
-            <div
-              v-if="player.online"
-              class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"
-            ></div>
-          </div>
-
-          <!-- Информация об игроке -->
-          <div class="ml-3 flex-grow min-w-0">
+          <div class="p-4">
             <div class="flex items-center">
-              <div class="font-medium truncate">{{ player.name }}</div>
-              <div
-                v-if="player.isMe"
-                class="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-500 text-xs rounded"
-              >
-                Вы
+              <!-- Место в рейтинге -->
+              <div class="flex-none relative">
+                <div
+                  class="w-12 h-12 rounded-full flex items-center justify-center shadow-sm"
+                  :class="{
+                    'bg-gradient-to-br from-gray-300 to-gray-400 text-white': index === 0,
+                    'bg-gradient-to-br from-amber-200 to-amber-300 text-white':
+                      index === 1,
+                    'bg-slate-100 text-slate-500': index > 1,
+                  }"
+                >
+                  <Icon v-if="index <= 1" icon="mdi:trophy" class="w-6 h-6" />
+                  <span v-else class="font-bold">{{ index + 2 }}</span>
+                </div>
+                <div
+                  v-if="player.online"
+                  class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"
+                ></div>
               </div>
-              <div v-if="player.badge" class="ml-1 text-xs text-gray-500">
-                ({{ player.badge }})
-              </div>
-            </div>
-            <div class="text-xs text-gray-500 truncate">
-              {{ player.stats[activeTab].details }}
-            </div>
-          </div>
 
-          <!-- Значение рейтинга и тренд -->
-          <div class="flex-none text-right">
-            <div class="font-bold" :class="{ 'text-blue-500': player.isMe }">
-              {{ formatValue(player.stats[activeTab].value) }}
-            </div>
-            <div
-              class="flex items-center justify-end text-xs font-medium"
-              :class="getTrendClass(player.stats[activeTab].trend)"
-            >
-              <Icon
-                :icon="getTrendIcon(player.stats[activeTab].trend)"
-                class="w-3 h-3 mr-0.5"
-              />
-              {{ Math.abs(player.stats[activeTab].trend) }}%
+              <!-- Информация о игроке -->
+              <div class="ml-3 flex-grow min-w-0">
+                <div class="flex items-center flex-wrap">
+                  <div class="font-medium">{{ player.name }}</div>
+                  <div
+                    v-if="player.isMe"
+                    class="ml-1.5 px-1.5 py-0.5 bg-blue-100 text-blue-500 text-xs rounded-full"
+                  >
+                    Вы
+                  </div>
+                  <div
+                    v-if="player.badge"
+                    class="ml-1.5 px-1.5 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full"
+                  >
+                    {{ player.badge }}
+                  </div>
+                </div>
+                <div class="text-xs text-slate-500 mt-0.5">
+                  {{ player.stats[activeTab].details }}
+                </div>
+              </div>
+
+              <!-- Значение рейтинга и тренд -->
+              <div class="flex-none text-right">
+                <div class="font-bold" :class="{ 'text-blue-500': player.isMe }">
+                  {{ formatValue(player.stats[activeTab].value) }}
+                </div>
+                <div
+                  class="flex items-center justify-end text-xs font-medium"
+                  :class="getTrendClass(player.stats[activeTab].trend)"
+                >
+                  <Icon
+                    :icon="getTrendIcon(player.stats[activeTab].trend)"
+                    class="w-3.5 h-3.5 mr-0.5"
+                  />
+                  {{ Math.abs(player.stats[activeTab].trend) }}%
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </transition-group>
 
       <!-- Пустой рейтинг (если нет данных) -->
-      <div v-if="getFilteredPlayers().length === 0" class="py-12 px-4 text-center">
+      <div
+        v-if="getFilteredPlayers().length === 0"
+        class="bg-white rounded-xl shadow-md p-12 text-center"
+      >
         <div
-          class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3"
+          class="mx-auto w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4"
         >
-          <Icon icon="mdi:trophy" class="w-8 h-8 text-gray-400" />
+          <Icon icon="mdi:trophy-outline" class="w-10 h-10 text-slate-400" />
         </div>
-        <h3 class="font-medium mb-1">Рейтинг пуст</h3>
-        <p class="text-gray-500 text-sm mb-4">Станьте первым в этом рейтинге!</p>
+        <h3 class="text-lg font-medium mb-2">Рейтинг пуст</h3>
+        <p class="text-slate-500 mb-6">Станьте первым в этом рейтинге!</p>
+        <button
+          class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors duration-200"
+        >
+          Начать игру
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import BalanceBadge from "../components/BalanceBadge.vue";
 import { Icon } from "@iconify/vue";
 
@@ -175,18 +274,18 @@ import { Icon } from "@iconify/vue";
 const tabs = [
   {
     name: "Продажи",
-    icon: "mdi:truck",
-    description: "Рейтинг по количеству проданных автомобилей",
+    icon: "mdi:car-multiple",
+    description: "Рейтинг по количеству проданных автомобилей за всё время",
   },
   {
     name: "Прибыль",
-    icon: "mdi:chart-bar",
-    description: "Рейтинг по размеру полученной прибыли",
+    icon: "mdi:currency-usd",
+    description: "Рейтинг по размеру полученной прибыли от сделок",
   },
   {
     name: "Капитал",
-    icon: "mdi:currency-usd",
-    description: "Рейтинг по общему размеру капитала",
+    icon: "mdi:wallet",
+    description: "Рейтинг по общему размеру капитала включая стоимость автомобилей",
   },
 ];
 
@@ -302,10 +401,21 @@ const getFilteredPlayers = () => {
   });
 };
 
+// Получение моего места в рейтинге
+const getMyRank = () => {
+  const sortedPlayers = getFilteredPlayers();
+  for (let i = 0; i < sortedPlayers.length; i++) {
+    if (sortedPlayers[i].isMe) {
+      return i + 1;
+    }
+  }
+  return "-";
+};
+
 // Форматирование значения в зависимости от типа рейтинга
 const formatValue = (value: number) => {
   if (activeTab.value === 0) {
-    return value; // Количество продаж
+    return value.toLocaleString(); // Количество продаж
   } else {
     return `$${value.toLocaleString()}`; // Денежные значения
   }
@@ -335,6 +445,21 @@ const getTrendIcon = (trend: number) => {
 .list-enter-from,
 .list-leave-to {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateY(20px);
+}
+
+/* Дополнительные анимации для элементов списка */
+@keyframes pulse-light {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.05);
+  }
+}
+
+.highlight-new {
+  animation: pulse-light 2s ease;
 }
 </style>

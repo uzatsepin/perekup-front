@@ -108,97 +108,8 @@
       </div>
     </div>
 
-    <!-- Достижения -->
-    <div
-      class="bg-white rounded-lg shadow-md p-4 mb-6 slide-up"
-      style="animation-delay: 0.2s"
-    >
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-bold">Достижения</h3>
-        <button class="text-blue-500 text-sm">Показать все</button>
-      </div>
-
-      <div class="space-y-3">
-        <div
-          v-for="(achievement, index) in achievements"
-          :key="index"
-          class="flex items-center p-3 rounded-lg"
-          :class="
-            achievement.unlocked ? 'bg-slate-50' : 'bg-white border border-slate-200'
-          "
-        >
-          <div
-            class="w-10 h-10 rounded-full flex items-center justify-center mr-3"
-            :class="
-              achievement.unlocked ? achievement.bgColor : 'bg-slate-100 text-slate-400'
-            "
-          >
-            <Icon :icon="achievement.icon" class="w-5 h-5" />
-          </div>
-          <div class="flex-grow mr-2">
-            <div
-              class="font-medium"
-              :class="achievement.unlocked ? '' : 'text-slate-400'"
-            >
-              {{ achievement.name }}
-            </div>
-            <div class="text-xs text-slate-500">{{ achievement.description }}</div>
-          </div>
-          <div>
-            <div
-              class="text-xs font-medium px-2 py-1 rounded-full"
-              :class="
-                achievement.unlocked
-                  ? 'bg-emerald-100 text-emerald-600'
-                  : 'bg-slate-100 text-slate-500'
-              "
-            >
-              {{ achievement.unlocked ? "Получено" : "Не получено" }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- История действий -->
-    <div class="bg-white rounded-lg shadow-md p-4 slide-up" style="animation-delay: 0.3s">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-bold">История действий</h3>
-        <div class="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded-full">
-          {{ activityHistory.length }} действий
-        </div>
-      </div>
-
-      <div class="space-y-3">
-        <div
-          v-for="(activity, index) in activityHistory.slice(0, historyLimit)"
-          :key="index"
-          class="flex items-start pb-3"
-          :class="{ 'border-b border-slate-100': index < historyLimit - 1 }"
-        >
-          <div
-            class="w-8 h-8 rounded-full flex items-center justify-center mr-3 flex-shrink-0 mt-0.5"
-            :class="activity.bgColor"
-          >
-            <Icon :icon="activity.icon" class="w-4 h-4" :class="activity.iconColor" />
-          </div>
-          <div>
-            <div class="font-medium text-sm">{{ activity.title }}</div>
-            <div class="text-xs text-slate-500 mb-1">{{ activity.description }}</div>
-            <div class="text-xs text-slate-400">{{ formatDate(activity.date) }}</div>
-          </div>
-        </div>
-      </div>
-
-      <button
-        v-if="activityHistory.length > historyLimit"
-        @click="historyLimit = activityHistory.length"
-        class="w-full mt-3 py-2 text-sm text-blue-500 bg-blue-50 rounded-lg"
-      >
-        Показать больше
-      </button>
-    </div>
-
+    <ProfileHistory />
     <!-- Модальное окно настроек -->
     <div
       v-if="showSettings"
@@ -305,6 +216,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import BalanceBadge from "../components/BalanceBadge.vue";
 import { Icon } from "@iconify/vue";
+import ProfileHistory from "@/components/Profile/ProfileHistory.vue";
 
 const router = useRouter();
 
@@ -376,51 +288,6 @@ const achievements = [
   },
 ];
 
-// История действий
-const activityHistory = [
-  {
-    title: "Продажа автомобиля",
-    description: "Продан Toyota Camry 2015 за $15,200",
-    date: new Date(2023, 6, 12),
-    icon: "mdi:tag-check",
-    bgColor: "bg-emerald-100",
-    iconColor: "text-emerald-500",
-  },
-  {
-    title: "Ремонт автомобиля",
-    description: "Отремонтирован Honda Civic 2017, потрачено $1,200",
-    date: new Date(2023, 6, 10),
-    icon: "mdi:wrench",
-    bgColor: "bg-amber-100",
-    iconColor: "text-amber-500",
-  },
-  {
-    title: "Покупка автомобиля",
-    description: "Куплен BMW X5 2016 за $22,000",
-    date: new Date(2023, 6, 8),
-    icon: "mdi:cart",
-    bgColor: "bg-blue-100",
-    iconColor: "text-blue-500",
-  },
-  {
-    title: "Получен ежедневный бонус",
-    description: "Ежедневный бонус $500",
-    date: new Date(2023, 6, 7),
-    icon: "mdi:gift",
-    bgColor: "bg-indigo-100",
-    iconColor: "text-indigo-500",
-  },
-  {
-    title: "Достижение разблокировано",
-    description: "Разблокировано достижение 'Первая продажа'",
-    date: new Date(2023, 6, 5),
-    icon: "mdi:trophy",
-    bgColor: "bg-purple-100",
-    iconColor: "text-purple-500",
-  },
-];
-const historyLimit = ref(3);
-
 // Настройки
 const showSettings = ref(false);
 const currentTheme = ref("light");
@@ -432,30 +299,20 @@ const notifications = ref({
 const dailyBonusAvailable = ref(true);
 const showBonusNotification = ref(false);
 
-// Методы
-const formatDate = (date: Date) => {
-  // Возвращает дату в формате "12 июл. 2023"
-  return date.toLocaleDateString("ru-RU", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-};
-
 const claimDailyBonus = () => {
   if (dailyBonusAvailable.value) {
     userBalance.value += 500;
     dailyBonusAvailable.value = false;
 
     // Добавляем в историю
-    activityHistory.unshift({
-      title: "Получен ежедневный бонус",
-      description: "Ежедневный бонус $500",
-      date: new Date(),
-      icon: "mdi:gift",
-      bgColor: "bg-indigo-100",
-      iconColor: "text-indigo-500",
-    });
+    // activityHistory.unshift({
+    //   title: "Получен ежедневный бонус",
+    //   description: "Ежедневный бонус $500",
+    //   date: new Date(),
+    //   icon: "mdi:gift",
+    //   bgColor: "bg-indigo-100",
+    //   iconColor: "text-indigo-500",
+    // });
 
     // Показываем уведомление
     showBonusNotification.value = true;

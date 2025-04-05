@@ -1,9 +1,12 @@
 <template>
-  <div class="py-4">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">Авторынок</h1>
-      <BalanceBadge :balance="5000" />
-    </div>
+  <div class="pb-4">
+    <Header>
+      <template #title>Авторынок</template>
+      <template #descr>Выберите авто или автосалон</template>
+      <template #info>
+        <BalanceBadge :balance="balance" />
+      </template>
+    </Header>
 
     <!-- Табы авторынка -->
     <div class="bg-white rounded-lg shadow-md mb-4 overflow-hidden">
@@ -121,156 +124,44 @@
     <!-- Авторынок -->
     <div v-if="activeTab === 0">
       <div v-if="filteredMarketCars.length > 0" class="grid grid-cols-2 gap-3">
-        <div
-          v-for="car in filteredMarketCars"
-          :key="car.id"
-          class="bg-white rounded-lg shadow-md overflow-hidden fade-in"
-          @click="goToCarDetails(car.id)"
-        >
-          <div class="relative">
-            <img
-              :src="car.photoUrl"
-              :alt="`${car.brand} ${car.model}`"
-              class="w-full h-32 object-cover"
-            />
-            <div
-              class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent py-1 px-2"
-            >
-              <div class="text-white text-xs font-medium truncate">
-                {{ car.brand }} {{ car.model }}
-              </div>
-            </div>
-            <div
-              class="absolute top-2 right-2 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full"
-            >
-              ${{ car.price.toLocaleString() }}
-            </div>
-            <div
-              class="absolute top-2 left-2 px-2 py-0.5 bg-black/60 text-white text-xs rounded-full flex items-center"
-            >
-              <Icon icon="mdi:star" class="w-3 h-3 mr-0.5 text-amber-400" />
-              {{ car.popularityScore }}%
-            </div>
-          </div>
-          <div class="p-2">
-            <div class="flex justify-between items-start mb-1">
-              <div class="text-xs text-slate-500">{{ car.year }} г.</div>
-              <div class="text-xs font-medium" :class="getConditionClass(car.condition)">
-                {{ getConditionText(car.condition) }}
-              </div>
-            </div>
-            <div class="text-xs text-slate-500 truncate">
-              Пробег: {{ formatMileage(car.mileage) }} км
-            </div>
-          </div>
-        </div>
+        <MarketCarCard v-for="car in filteredMarketCars" :key="car.id" :car="car" />
       </div>
 
-      <div v-else class="bg-white rounded-lg shadow-md p-8 text-center">
-        <div
-          class="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3"
-        >
-          <Icon icon="mdi:car-search" class="w-8 h-8 text-slate-400" />
-        </div>
-        <h3 class="font-medium mb-1">Машины не найдены</h3>
-        <p class="text-slate-500 text-sm mb-4">
-          Попробуйте изменить параметры поиска или фильтры
-        </p>
-      </div>
+      <MarketCarEmpty v-else class="fade-in" />
     </div>
 
     <!-- Салоны -->
     <div v-if="activeTab === 1">
       <div v-if="dealerships.length > 0" class="space-y-4">
-        <div
+        <MarketDealershipCard
           v-for="dealership in dealerships"
           :key="dealership.id"
-          class="bg-white rounded-lg shadow-md overflow-hidden fade-in"
-          @click="goToDealership(dealership.id)"
-        >
-          <div class="relative">
-            <img
-              :src="dealership.photoUrl"
-              alt="Dealership"
-              class="w-full h-40 object-cover"
-            />
-            <div
-              class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent py-3 px-4"
-            >
-              <div class="text-white font-medium text-lg">
-                {{ dealership.name }}
-              </div>
-              <div class="text-white/80 text-xs flex items-center">
-                <Icon icon="mdi:map-marker" class="w-3.5 h-3.5 mr-1" />
-                {{ dealership.location }}
-              </div>
-            </div>
-            <div
-              class="absolute top-3 right-3 px-2 py-1 bg-white/90 text-slate-800 text-xs rounded-lg flex items-center"
-            >
-              <Icon icon="mdi:car-multiple" class="w-3.5 h-3.5 mr-1 text-blue-500" />
-              {{ dealership.carsCount }} авто
-            </div>
-          </div>
-          <div class="p-3 border-t border-slate-100">
-            <div class="flex justify-between mb-2">
-              <div class="flex items-center">
-                <Icon icon="mdi:star" class="w-4 h-4 text-amber-400 mr-1" />
-                <span class="text-sm font-medium">{{ dealership.rating }}</span>
-                <span class="text-xs text-slate-500 ml-1"
-                  >({{ dealership.reviewsCount }})</span
-                >
-              </div>
-              <div>
-                <span
-                  class="text-xs px-2 py-0.5 rounded-full"
-                  :class="getLevelBadgeClass(dealership.level)"
-                >
-                  {{ getLevelText(dealership.level) }}
-                </span>
-              </div>
-            </div>
-            <p class="text-xs text-slate-500 line-clamp-2">
-              {{ dealership.description }}
-            </p>
-            <div class="mt-2 flex flex-wrap gap-1">
-              <span
-                v-for="(tag, i) in dealership.tags"
-                :key="i"
-                class="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full"
-              >
-                {{ tag }}
-              </span>
-            </div>
-          </div>
-        </div>
+          :dealership="dealership"
+        />
       </div>
 
-      <div v-else class="bg-white rounded-lg shadow-md p-8 text-center">
-        <div
-          class="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3"
-        >
-          <Icon icon="mdi:store-search" class="w-8 h-8 text-slate-400" />
-        </div>
-        <h3 class="font-medium mb-1">Салоны не найдены</h3>
-        <p class="text-slate-500 text-sm mb-4">
-          В данный момент нет доступных автосалонов
-        </p>
-      </div>
+      <MarketDealershipEmpty v-else class="fade-in" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
 import BalanceBadge from "../components/BalanceBadge.vue";
+import Header from "../components/Header.vue";
 import { Icon } from "@iconify/vue";
+import { useBalanceStore } from "@/stores/balance";
+import MarketCarCard from "@/components/Market/MarketCarCard.vue";
+import MarketCarEmpty from "@/components/Market/MarketCarEmpty.vue";
+import MarketDealershipCard from "@/components/Market/MarketDealershipCard.vue";
+import MarketDealershipEmpty from "@/components/Market/MarketDealershipEmpty.vue";
 
-const router = useRouter();
 const activeTab = ref(0);
 const showFilters = ref(false);
 const searchQuery = ref("");
+
+const balanceStore = useBalanceStore();
+const balance = computed(() => balanceStore.balance);
 
 // Определение табов
 const tabs = [
@@ -475,62 +366,5 @@ const filteredMarketCars = computed(() => {
 // Методы
 const applyFilters = () => {
   showFilters.value = false;
-};
-
-const goToCarDetails = (carId: number) => {
-  router.push(`/market/car/${carId}`);
-};
-
-const goToDealership = (dealershipId: number) => {
-  router.push(`/market/dealership/${dealershipId}`);
-};
-
-// Форматирование пробега с разделением тысяч
-const formatMileage = (mileage: number) => {
-  return mileage.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-};
-
-// Получение текста для состояния авто
-const getConditionText = (condition: number) => {
-  if (condition >= 80) return "Отличное";
-  if (condition >= 60) return "Хорошее";
-  if (condition >= 40) return "Среднее";
-  return "Требует ремонта";
-};
-
-// Получение класса для состояния авто
-const getConditionClass = (condition: number) => {
-  if (condition >= 80) return "text-emerald-500";
-  if (condition >= 60) return "text-blue-500";
-  if (condition >= 40) return "text-amber-500";
-  return "text-red-500";
-};
-
-// Получение текста для уровня автосалона
-const getLevelText = (level: string) => {
-  switch (level) {
-    case "premium":
-      return "Премиум";
-    case "standard":
-      return "Стандарт";
-    case "economy":
-      return "Эконом";
-    default:
-      return level;
-  }
-};
-
-// Получение класса для бейджа уровня автосалона
-const getLevelBadgeClass = (level: string) => {
-  switch (level) {
-    case "premium":
-      return "bg-indigo-100 text-indigo-600";
-    case "standard":
-      return "bg-blue-100 text-blue-600";
-    case "economy":
-      return "bg-emerald-100 text-emerald-600";
-    default:
-      return "bg-slate-100 text-slate-600";
-  }
 };
 </script>

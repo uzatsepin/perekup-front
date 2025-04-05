@@ -79,7 +79,7 @@
             </div>
             <div>
               <div class="text-xs text-slate-500">Пробег</div>
-              <div class="font-medium">{{ formatMileage(car.mileage) }} км</div>
+              <div class="font-medium">{{ car.mileage }} км</div>
             </div>
           </div>
 
@@ -147,13 +147,35 @@
             <li
               v-for="(issue, i) in car.issues"
               :key="i"
-              class="bg-amber-50 p-3 rounded-lg flex items-start"
+              class="bg-amber-50 p-3 rounded-lg"
             >
-              <Icon
-                icon="mdi:wrench"
-                class="w-5 h-5 text-amber-500 mr-2 flex-shrink-0 mt-0.5"
-              />
-              <span class="text-sm">{{ issue }}</span>
+              <div class="flex items-start justify-between">
+                <div class="flex items-start">
+                  <Icon
+                    icon="mdi:wrench"
+                    class="w-5 h-5 text-amber-500 mr-2 flex-shrink-0 mt-0.5"
+                  />
+                  <div>
+                    <span class="text-sm">{{ issue.description }}</span>
+                    <div class="text-xs text-slate-500 mt-1">
+                      Сложность:
+                      <span
+                        :class="{
+                          'text-green-600': issue.complexity === 'easy',
+                          'text-amber-600': issue.complexity === 'medium',
+                          'text-red-600': issue.complexity === 'hard',
+                        }"
+                      >
+                        {{ getComplexityText(issue.complexity) }}
+                      </span>
+                      <span class="mx-1">•</span>
+                      Время: {{ formatRepairTime(issue.repairTimeHours) }}
+                    </div>
+                  </div>
+                </div>
+
+                <span class="text-amber-600 font-medium">${{ issue.repairCost }}</span>
+              </div>
             </li>
           </ul>
         </div>
@@ -213,7 +235,7 @@
           <!-- Кнопки для автомобиля в ремонте -->
           <template v-if="car.status === 'repair'">
             <button
-              @click="repairNow"
+              @click="showRepairNowModal = true"
               class="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-medium rounded-lg flex items-center justify-center"
             >
               <Icon icon="mdi:wrench" class="h-5 w-5 mr-2" />
@@ -314,12 +336,131 @@
         </div>
       </div>
     </div>
+
+    <!-- Модальное окно подтверждения ремонта -->
+    <div
+      v-if="showRepairModal"
+      class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+    >
+      <div class="bg-white rounded-lg w-full max-w-sm p-5 scale-in">
+        <h3 class="font-bold text-lg mb-2">Ремонт автомобиля</h3>
+
+        <div class="mb-4">
+          <div class="text-sm text-slate-600 mb-3">
+            Выберите, какие проблемы вы хотите устранить:
+          </div>
+
+          <div v-if="car?.issues && car.issues.length > 0" class="space-y-2">
+            <div
+              v-for="(issue, i) in car.issues"
+              :key="i"
+              class="flex items-center justify-between border rounded-lg p-2.5 cursor-pointer"
+              :class="
+                selectedIssues.includes(i)
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-slate-200'
+              "
+              @click="toggleIssueSelection(i)"
+            >
+              <div class="flex items-start">
+                <div
+                  class="w-5 h-5 rounded border mr-2 flex items-center justify-center flex-shrink-0"
+                  :class="
+                    selectedIssues.includes(i)
+                      ? 'bg-blue-500 border-blue-500'
+                      : 'border-slate-300'
+                  "
+                >
+                  <Icon
+                    v-if="selectedIssues.includes(i)"
+                    icon="mdi:check"
+                    class="w-4 h-4 text-white"
+                  />
+                </div>
+                <div>
+                  <div class="text-sm font-medium">{{ issue.description }}</div>
+                  <div class="text-xs text-slate-500">
+                    {{ formatRepairTime(issue.repairTimeHours) }}
+                  </div>
+                </div>
+              </div>
+              <div class="text-amber-600 font-medium">${{ issue.repairCost }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-4 p-3 bg-slate-50 rounded-lg">
+          <div>
+            <div class="text-sm font-medium">Общая стоимость:</div>
+            <div class="text-xs text-slate-500">Время: {{ getTotalRepairTime() }}</div>
+          </div>
+          <div class="text-lg font-bold text-blue-600">
+            ${{ getSelectedRepairCost() }}
+          </div>
+        </div>
+
+        <div class="flex space-x-3">
+          <button
+            @click="showRepairModal = false"
+            class="flex-1 bg-slate-200 hover:bg-slate-300 py-2 rounded-md text-slate-800"
+          >
+            Отмена
+          </button>
+          <button
+            @click="startRepair"
+            class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-md"
+            :disabled="selectedIssues.length === 0"
+          >
+            Починить
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно мгновенного ремонта -->
+    <div
+      v-if="showRepairNowModal"
+      class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+    >
+      <div class="bg-white rounded-lg w-full max-w-sm p-5 scale-in">
+        <h3 class="font-bold text-lg mb-2">Быстрый ремонт</h3>
+
+        <p class="text-sm text-slate-600 mb-4">
+          Вы можете мгновенно завершить ремонт, заплатив за срочность:
+        </p>
+
+        <div class="flex justify-between items-center mb-4 p-3 bg-slate-50 rounded-lg">
+          <div>
+            <div class="text-sm font-medium">Стоимость:</div>
+            <div class="text-xs text-slate-500">
+              Сейчас в ремонте: {{ getTimeLeft() }}
+            </div>
+          </div>
+          <div class="text-lg font-bold text-blue-600">${{ getRepairCost() }}</div>
+        </div>
+
+        <div class="flex space-x-3">
+          <button
+            @click="showRepairNowModal = false"
+            class="flex-1 bg-slate-200 hover:bg-slate-300 py-2 rounded-md text-slate-800"
+          >
+            Отмена
+          </button>
+          <button
+            @click="repairNow"
+            class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-md"
+          >
+            Починить сейчас
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 // Страница с карточкой автомобиля из вашего гаража (уже купленного)
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import BalanceBadge from "../components/BalanceBadge.vue";
 import { Icon } from "@iconify/vue";
@@ -328,9 +469,23 @@ const route = useRoute();
 const router = useRouter();
 const carId = parseInt(route.params.id as string);
 const showSellModal = ref(false);
+const showRepairModal = ref(false);
+const showRepairNowModal = ref(false);
 const sellPrice = ref(0);
+const selectedIssues = ref<number[]>([]);
 
-// Типы для автомобиля
+// Сложность ремонта
+type RepairComplexity = "easy" | "medium" | "hard";
+
+// Интерфейс для проблемы автомобиля
+interface CarIssue {
+  description: string;
+  repairCost: number;
+  repairTimeHours: number;
+  complexity: RepairComplexity;
+}
+
+// Обновленный интерфейс типа для автомобиля
 interface Car {
   id: number;
   brand: string;
@@ -347,8 +502,9 @@ interface Car {
   repairInvestment: number;
   price?: number;
   repairProgress?: number;
+  repairEndTime?: Date;
   sellingStartDate?: Date;
-  issues?: string[];
+  issues?: CarIssue[];
 }
 
 // Данные автомобиля
@@ -370,11 +526,29 @@ onMounted(() => {
       if (parsedData.sellingStartDate) {
         parsedData.sellingStartDate = new Date(parsedData.sellingStartDate);
       }
+      if (parsedData.repairEndTime) {
+        parsedData.repairEndTime = new Date(parsedData.repairEndTime);
+      }
+
+      // Проверяем, правильно ли оформлены проблемы автомобиля
+      if (parsedData.issues && Array.isArray(parsedData.issues)) {
+        // Если есть старые данные, конвертируем в новый формат
+        if (parsedData.issues.length > 0 && typeof parsedData.issues[0] === "string") {
+          parsedData.issues = parsedData.issues.map((description: string) => {
+            return createIssue(description);
+          });
+        }
+      }
 
       car.value = parsedData;
+
       // Устанавливаем рекомендуемую цену продажи
       if (car.value) {
         sellPrice.value = Math.round(car.value.marketValue * 1.1);
+        // По умолчанию выбираем все проблемы для ремонта
+        if (car.value.issues) {
+          selectedIssues.value = car.value.issues.map((_, index) => index);
+        }
       }
     } catch (error) {
       console.error("Ошибка при парсинге данных автомобиля:", error);
@@ -404,54 +578,179 @@ const loadFallbackData = () => {
       purchaseDate: new Date(2023, 5, 15),
       purchasePrice: 12000,
       repairInvestment: 800,
-      issues: ["Небольшие царапины на бампере", "Требуется настройка двигателя"],
+      issues: [
+        {
+          description: "Небольшие царапины на бампере",
+          repairCost: 200,
+          repairTimeHours: 2,
+          complexity: "easy",
+        },
+        {
+          description: "Требуется настройка двигателя",
+          repairCost: 350,
+          repairTimeHours: 4,
+          complexity: "medium",
+        },
+      ],
     };
 
     // Предустановленная цена продажи
     sellPrice.value = Math.round(car.value.marketValue * 1.1);
+
+    // По умолчанию выбираем все проблемы для ремонта
+    if (car.value.issues) {
+      selectedIssues.value = car.value.issues.map((_, index) => index);
+    }
   }, 300);
 };
 
-// Форматирование пробега с разделением тысяч
-const formatMileage = (mileage: number) => {
-  return mileage.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+// Создание стандартного объекта проблемы из описания
+const createIssue = (description: string): CarIssue => {
+  // В зависимости от описания определяем сложность и затраты
+  let complexity: RepairComplexity = "medium";
+  let repairCost = 300;
+  let repairTimeHours = 3;
+
+  if (
+    description.toLowerCase().includes("царапин") ||
+    description.toLowerCase().includes("мелк") ||
+    description.toLowerCase().includes("настройк")
+  ) {
+    complexity = "easy";
+    repairCost = Math.floor(Math.random() * 100) + 100; // 100-200
+    repairTimeHours = Math.floor(Math.random() * 3) + 1; // 1-3 часа
+  } else if (
+    description.toLowerCase().includes("двигател") ||
+    description.toLowerCase().includes("тормоз") ||
+    description.toLowerCase().includes("колод")
+  ) {
+    complexity = "medium";
+    repairCost = Math.floor(Math.random() * 300) + 300; // 300-600
+    repairTimeHours = Math.floor(Math.random() * 6) + 3; // 3-8 часов
+  } else {
+    complexity = "hard";
+    repairCost = Math.floor(Math.random() * 500) + 600; // 600-1100
+    repairTimeHours = Math.floor(Math.random() * 24) + 8; // 8-32 часов
+  }
+
+  return {
+    description,
+    repairCost,
+    repairTimeHours,
+    complexity,
+  };
 };
 
-// Получение текста для состояния авто
-const getConditionText = (condition: number) => {
-  if (condition >= 80) return "Отличное";
-  if (condition >= 60) return "Хорошее";
-  if (condition >= 40) return "Среднее";
-  return "Требует ремонта";
+// Переключение выбора проблемы для ремонта
+const toggleIssueSelection = (index: number) => {
+  const position = selectedIssues.value.indexOf(index);
+  if (position !== -1) {
+    selectedIssues.value.splice(position, 1);
+  } else {
+    selectedIssues.value.push(index);
+  }
 };
 
-// Получение класса для состояния авто
-const getConditionClass = (condition: number) => {
-  if (condition >= 80) return "text-emerald-500";
-  if (condition >= 60) return "text-blue-500";
-  if (condition >= 40) return "text-amber-500";
-  return "text-red-500";
+// Получение общей стоимости выбранных ремонтов
+const getSelectedRepairCost = () => {
+  if (!car.value || !car.value.issues) return 0;
+
+  return selectedIssues.value.reduce((total, index) => {
+    if (index >= 0 && index < car.value!.issues!.length) {
+      return total + car.value!.issues![index].repairCost;
+    }
+    return total;
+  }, 0);
 };
 
-// Получение описания популярности
-const getPopularityDescription = (score: number) => {
-  if (score >= 80) return "Высокий спрос, быстрая продажа по высокой цене";
-  if (score >= 60) return "Хороший спрос, возможна продажа по рыночной цене";
-  if (score >= 40) return "Средний спрос, может потребоваться снижение цены";
-  return "Низкий спрос, сложная продажа, требуется значительное снижение цены";
+// Получение общего времени ремонта в часах
+const getTotalRepairTimeHours = () => {
+  if (!car.value || !car.value.issues) return 0;
+
+  return selectedIssues.value.reduce((total, index) => {
+    if (index >= 0 && index < car.value!.issues!.length) {
+      return total + car.value!.issues![index].repairTimeHours;
+    }
+    return total;
+  }, 0);
 };
 
-// Форматирование статуса для отображения
-const formatStatus = (status: string) => {
-  switch (status) {
-    case "ready":
-      return "Готов";
-    case "repair":
-      return "Ремонт";
-    case "selling":
-      return "Продается";
+// Форматирование общего времени ремонта
+const getTotalRepairTime = () => {
+  const hours = getTotalRepairTimeHours();
+  return formatRepairTime(hours);
+};
+
+// Получение текста для сложности ремонта
+const getComplexityText = (complexity: RepairComplexity) => {
+  switch (complexity) {
+    case "easy":
+      return "Легкий";
+    case "medium":
+      return "Средний";
+    case "hard":
+      return "Сложный";
     default:
-      return status;
+      return "Средний";
+  }
+};
+
+// Начало ремонта
+const startRepair = () => {
+  if (!car.value || selectedIssues.value.length === 0) return;
+
+  // Получаем общую стоимость ремонта
+  const repairCost = getSelectedRepairCost();
+
+  // Получаем общее время ремонта в часах
+  const repairTimeHours = getTotalRepairTimeHours();
+
+  // Устанавливаем статус "repair" и время окончания ремонта
+  car.value.status = "repair";
+
+  // Вычисляем время окончания ремонта
+  const now = new Date();
+  const repairEndTime = new Date(now.getTime() + repairTimeHours * 60 * 60 * 1000);
+  car.value.repairEndTime = repairEndTime;
+
+  // Устанавливаем прогресс ремонта на 0%
+  car.value.repairProgress = 0;
+
+  // Добавляем стоимость ремонта к общим затратам
+  car.value.repairInvestment += repairCost;
+
+  // Удаляем выбранные проблемы
+  car.value.issues = car.value.issues!.filter(
+    (_, index) => !selectedIssues.value.includes(index)
+  );
+
+  // Сохраняем обновленные данные в localStorage
+  localStorage.setItem("selectedCar", JSON.stringify(car.value));
+
+  // Закрываем модальное окно
+  showRepairModal.value = false;
+
+  // Сбрасываем выбранные проблемы
+  selectedIssues.value = [];
+};
+
+// Форматирование времени ремонта
+const formatRepairTime = (hours: number) => {
+  if (hours < 1) return "Менее часа";
+
+  const days = Math.floor(hours / 24);
+  const remainingHours = Math.round(hours % 24);
+
+  if (days === 0) {
+    return `${remainingHours} ${formatHours(remainingHours)}`;
+  } else {
+    if (remainingHours === 0) {
+      return `${days} ${formatDays(days)}`;
+    } else {
+      return `${days} ${formatDays(days)} ${remainingHours} ${formatHours(
+        remainingHours
+      )}`;
+    }
   }
 };
 
@@ -482,16 +781,103 @@ const getTimeAgo = (date?: Date) => {
 
 // Получение оставшегося времени ремонта
 const getTimeLeft = () => {
-  if (!car.value || !car.value.repairProgress) return "";
+  if (!car.value || !car.value.repairEndTime) return "";
 
-  // Предполагаем, что ремонт занимает 24 часа
-  const hoursLeft = Math.round(24 * (1 - car.value.repairProgress / 100));
+  const now = new Date();
+  const endTime = new Date(car.value.repairEndTime);
 
-  if (hoursLeft < 1) {
-    return "менее часа";
-  } else {
-    return `${hoursLeft} ${formatHours(hoursLeft)}`;
+  // Если время ремонта уже прошло
+  if (now >= endTime) {
+    // Автоматически завершаем ремонт
+    if (car.value.status === "repair") {
+      finishRepair();
+    }
+    return "завершен";
   }
+
+  const diffMs = endTime.getTime() - now.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (diffHours < 1) {
+    return `${diffMinutes} минут`;
+  } else if (diffHours < 24) {
+    return `${diffHours} ${formatHours(diffHours)} ${diffMinutes} мин`;
+  } else {
+    const diffDays = Math.floor(diffHours / 24);
+    const remainingHours = diffHours % 24;
+    if (remainingHours === 0) {
+      return `${diffDays} ${formatDays(diffDays)}`;
+    } else {
+      return `${diffDays} ${formatDays(diffDays)} ${remainingHours} ${formatHours(
+        remainingHours
+      )}`;
+    }
+  }
+};
+
+// Завершение ремонта
+const finishRepair = () => {
+  if (!car.value) return;
+
+  car.value.status = "ready";
+  car.value.repairEndTime = undefined;
+  car.value.repairProgress = undefined;
+
+  // Обновляем состояние автомобиля (улучшаем)
+  car.value.condition = Math.min(100, car.value.condition + 15);
+
+  // Сохраняем обновленные данные в localStorage
+  localStorage.setItem("selectedCar", JSON.stringify(car.value));
+};
+
+// Расчет стоимости ремонта
+const getRepairCost = () => {
+  if (!car.value) return 0;
+
+  // Если машина уже в ремонте, рассчитываем стоимость срочного завершения
+  if (car.value.status === "repair" && car.value.repairEndTime) {
+    const now = new Date();
+    const endTime = new Date(car.value.repairEndTime);
+    const diffMs = Math.max(0, endTime.getTime() - now.getTime());
+    const diffHours = diffMs / (1000 * 60 * 60);
+
+    // Базовая стоимость - зависит от оставшегося времени
+    return Math.round(car.value.marketValue * 0.05 * (diffHours / 24 + 0.5));
+  }
+
+  // Если есть проблемы, суммируем их стоимость
+  if (car.value.issues && car.value.issues.length > 0) {
+    return car.value.issues.reduce((total, issue) => total + issue.repairCost, 0);
+  }
+
+  // Базовый случай без проблем
+  return Math.round(car.value.marketValue * 0.1);
+};
+
+// Немедленный ремонт
+const repairNow = () => {
+  if (!car.value) return;
+
+  // Добавляем стоимость экспресс-ремонта к общим затратам
+  car.value.repairInvestment += getRepairCost();
+
+  // Завершаем ремонт
+  finishRepair();
+
+  // Улучшаем состояние дополнительно за срочность
+  car.value.condition = Math.min(100, car.value.condition + 5);
+
+  // Закрываем модальное окно
+  showRepairNowModal.value = false;
+};
+
+// Улучшение состояния автомобиля
+const improveCondition = () => {
+  if (!car.value) return;
+
+  // Показываем модальное окно для ремонта
+  showRepairModal.value = true;
 };
 
 // Форматирование слова "часов" в зависимости от числа
@@ -521,18 +907,43 @@ const getImproveCost = () => {
   return Math.round(baseCost * conditionMultiplier);
 };
 
-// Расчет стоимости ремонта
-const getRepairCost = () => {
-  if (!car.value) return 0;
-
-  // Базовая стоимость ремонта зависит от рыночной стоимости и количества проблем
-  const baseRepairCost = car.value.marketValue * 0.1;
-  const issuesCost = car.value.issues ? car.value.issues.length * 300 : 0;
-
-  return Math.round(baseRepairCost + issuesCost);
+// Получение описания популярности
+const getPopularityDescription = (score: number) => {
+  if (score >= 80) return "Высокий спрос, быстрая продажа по высокой цене";
+  if (score >= 60) return "Хороший спрос, возможна продажа по рыночной цене";
+  if (score >= 40) return "Средний спрос, может потребоваться снижение цены";
+  return "Низкий спрос, сложная продажа, требуется значительное снижение цены";
 };
 
-// Функции для действий с автомобилем
+// Форматирование статуса для отображения
+const formatStatus = (status: string) => {
+  switch (status) {
+    case "ready":
+      return "Готов";
+    case "repair":
+      return "Ремонт";
+    case "selling":
+      return "Продается";
+    default:
+      return status;
+  }
+};
+
+// Получение текста для состояния авто
+const getConditionText = (condition: number) => {
+  if (condition >= 80) return "Отличное";
+  if (condition >= 60) return "Хорошее";
+  if (condition >= 40) return "Среднее";
+  return "Требует ремонта";
+};
+
+// Получение класса для состояния авто
+const getConditionClass = (condition: number) => {
+  if (condition >= 80) return "text-emerald-500";
+  if (condition >= 60) return "text-blue-500";
+  if (condition >= 40) return "text-amber-500";
+  return "text-red-500";
+};
 
 // Выставление на продажу
 const sellCar = () => {
@@ -543,46 +954,20 @@ const sellCar = () => {
   car.value.price = sellPrice.value;
   car.value.sellingStartDate = new Date();
   showSellModal.value = false;
+
+  // Сохраняем обновленные данные в localStorage
+  localStorage.setItem("selectedCar", JSON.stringify(car.value));
 };
 
 // Отмена продажи
 const cancelSale = () => {
   if (!car.value) return;
 
-  // В реальном приложении здесь был бы API-запрос
   car.value.status = "ready";
   car.value.price = undefined;
   car.value.sellingStartDate = undefined;
-};
 
-// Улучшение состояния автомобиля
-const improveCondition = () => {
-  if (!car.value) return;
-
-  // В реальном приложении здесь был бы API-запрос
-  // Увеличиваем состояние на 10% (до максимума 100%)
-  car.value.condition = Math.min(100, car.value.condition + 10);
-
-  // Увеличиваем рыночную стоимость
-  car.value.marketValue = Math.round(car.value.marketValue * 1.1);
-
-  // Добавляем в общую стоимость ремонта
-  car.value.repairInvestment += getImproveCost();
-
-  // Удаляем некоторые проблемы
-  if (car.value.issues && car.value.issues.length > 0) {
-    car.value.issues.pop();
-  }
-};
-
-// Немедленный ремонт
-const repairNow = () => {
-  if (!car.value) return;
-
-  // В реальном приложении здесь был бы API-запрос
-  car.value.status = "ready";
-  car.value.condition = Math.min(100, car.value.condition + 30);
-  car.value.repairInvestment += getRepairCost();
-  car.value.issues = [];
+  // Сохраняем обновленные данные в localStorage
+  localStorage.setItem("selectedCar", JSON.stringify(car.value));
 };
 </script>

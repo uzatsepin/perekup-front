@@ -53,58 +53,78 @@
       </div>
     </div>
 
-    <!-- Поиск и фильтры -->
-    <div class="bg-white rounded-lg shadow-md p-3 mb-5 slide-up">
-      <div class="flex space-x-2">
-        <div class="relative flex-grow">
-          <div
-            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+    <!-- Табы для категорий автомобилей -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-5">
+      <!-- Мобильная версия табов в виде выпадающего списка -->
+      <div class="md:hidden p-3 border-b border-slate-100">
+        <div class="relative">
+          <select
+            v-model="activeTab"
+            class="w-full appearance-none bg-slate-50 border border-slate-200 rounded-lg py-2 pl-3 pr-8 text-sm"
           >
-            <Icon icon="mdi:magnify" class="h-5 w-5 text-slate-400" />
+            <option v-for="tab in tabs" :key="tab.value" :value="tab.value">
+              {{ tab.label }} ({{ getTabCount(tab.value) }})
+            </option>
+          </select>
+          <div
+            class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none"
+          >
+            <Icon icon="mdi:chevron-down" class="w-4 h-4 text-slate-400" />
           </div>
-          <input
-            type="text"
-            v-model="searchQuery"
-            placeholder="Поиск по марке или модели..."
-            class="block w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
         </div>
+      </div>
 
+      <!-- Десктопная версия табов -->
+      <div class="hidden md:flex border-b">
         <button
-          @click="showFilters = !showFilters"
-          class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 flex items-center"
+          v-for="(tab, index) in tabs"
+          :key="index"
+          @click="activeTab = tab.value"
+          class="flex-1 py-3 px-1 text-center font-medium transition-colors relative"
+          :class="
+            activeTab === tab.value
+              ? 'text-blue-600'
+              : 'text-slate-500 hover:text-slate-700'
+          "
         >
-          <Icon icon="mdi:filter-variant" class="h-5 w-5 mr-1.5" />
-          <span>Фильтры</span>
+          <div class="flex items-center justify-center">
+            <Icon :icon="tab.icon" class="w-5 h-5 mr-1.5" />
+            {{ tab.label }}
+            <div
+              v-if="getTabCount(tab.value) > 0"
+              class="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-600"
+            >
+              {{ getTabCount(tab.value) }}
+            </div>
+          </div>
+          <div
+            v-if="activeTab === tab.value"
+            class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
+          ></div>
         </button>
       </div>
 
-      <!-- Расширенные фильтры (скрыты по умолчанию) -->
-      <div v-if="showFilters" class="mt-3 pt-3 border-t border-slate-100 slide-up">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Статус</label>
-            <select
-              v-model="filters.status"
-              class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm"
-            >
-              <option value="">Все статусы</option>
-              <option value="ready">Готов</option>
-              <option value="repair">В ремонте</option>
-              <option value="selling">На продаже</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Сортировка</label>
-            <select
-              v-model="filters.sort"
-              class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm"
-            >
-              <option value="popular">По популярности</option>
-              <option value="condition">По состоянию</option>
-              <option value="value">По стоимости</option>
-              <option value="year">По году выпуска</option>
-            </select>
+      <!-- Мобильная оптимизированная панель сортировки -->
+      <div
+        class="p-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2"
+      >
+        <div class="text-xs text-slate-500 whitespace-nowrap">
+          {{ filteredCars.length }} автомобил{{ getCarWord(filteredCars.length) }}
+        </div>
+
+        <div class="relative flex-grow max-w-[180px]">
+          <select
+            v-model="selectedSort"
+            class="w-full appearance-none bg-slate-50 border border-slate-200 rounded-lg py-1.5 pl-3 pr-8 text-xs"
+          >
+            <option v-for="sort in sortOptions" :key="sort.value" :value="sort.value">
+              {{ sort.label }}
+            </option>
+          </select>
+          <div
+            class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none"
+          >
+            <Icon icon="mdi:chevron-down" class="w-4 h-4 text-slate-400" />
           </div>
         </div>
       </div>
@@ -218,49 +238,60 @@
               </div>
             </div>
 
-            <!-- Кнопки действий -->
-            <div class="mt-auto flex gap-2">
+            <!-- Кнопки действий для мобильных устройств (верт. стек) -->
+            <div class="mt-auto flex flex-col sm:flex-row gap-2">
               <button
                 @click="goToCarDetails(car.id)"
-                class="flex-1 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition-colors flex items-center justify-center"
+                class="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition-colors flex items-center justify-center"
               >
                 <Icon icon="mdi:information-outline" class="mr-1.5 w-5 h-5" />
                 Подробнее
               </button>
 
-              <button
-                v-if="car.status === 'ready'"
-                @click="prepareSellCar(car)"
-                class="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center"
-              >
-                <Icon icon="mdi:tag-outline" class="mr-1.5 w-5 h-5" />
-                Продать
-              </button>
+              <div class="flex gap-2">
+                <button
+                  v-if="car.status === 'ready'"
+                  @click="prepareSellCar(car)"
+                  class="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center"
+                >
+                  <Icon
+                    icon="mdi:tag-outline"
+                    class="mr-1.5 w-5 h-5 sm:hidden md:inline-block"
+                  />
+                  <span>Продать</span>
+                </button>
 
-              <button
-                v-if="car.status === 'repair'"
-                @click="repairCar(car)"
-                class="flex-1 px-3 py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors flex items-center justify-center"
-              >
-                <Icon icon="mdi:wrench" class="mr-1.5 w-5 h-5" />
-                Починить
-              </button>
+                <button
+                  v-if="car.status === 'repair'"
+                  @click="repairCar(car)"
+                  class="flex-1 px-3 py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors flex items-center justify-center"
+                >
+                  <Icon
+                    icon="mdi:wrench"
+                    class="mr-1.5 w-5 h-5 sm:hidden md:inline-block"
+                  />
+                  <span>Починить</span>
+                </button>
 
-              <button
-                v-if="car.status === 'selling'"
-                @click="cancelSale(car)"
-                class="flex-1 px-3 py-2 bg-slate-500 text-white rounded-lg font-medium hover:bg-slate-600 transition-colors flex items-center justify-center"
-              >
-                <Icon icon="mdi:close" class="mr-1.5 w-5 h-5" />
-                Отменить
-              </button>
+                <button
+                  v-if="car.status === 'selling'"
+                  @click="cancelSale(car)"
+                  class="flex-1 px-3 py-2 bg-slate-500 text-white rounded-lg font-medium hover:bg-slate-600 transition-colors flex items-center justify-center"
+                >
+                  <Icon
+                    icon="mdi:close"
+                    class="mr-1.5 w-5 h-5 sm:hidden md:inline-block"
+                  />
+                  <span>Отменить</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Пустой гараж -->
+    <!-- Пустой гараж или отсутствие автомобилей в выбранной категории -->
     <div v-else class="bg-white rounded-xl shadow-md p-8 text-center fade-in">
       <div class="mb-4">
         <div
@@ -269,17 +300,38 @@
           <Icon icon="mdi:car-off" class="w-10 h-10" />
         </div>
       </div>
-      <h3 class="text-lg font-medium mb-2">Ваш гараж пуст</h3>
+      <h3 class="text-lg font-medium mb-2">
+        {{
+          cars.length > 0
+            ? `В категории "${getActiveTabLabel()}" нет автомобилей`
+            : "Ваш гараж пуст"
+        }}
+      </h3>
       <p class="text-slate-500 mb-6">
-        Посетите авторынок, чтобы приобрести ваш первый автомобиль
+        {{
+          cars.length > 0
+            ? "Выберите другую категорию или добавьте автомобили в эту категорию"
+            : "Посетите авторынок, чтобы приобрести ваш первый автомобиль"
+        }}
       </p>
-      <router-link
-        to="/market"
-        class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg inline-flex items-center transition-colors"
-      >
-        <Icon icon="mdi:cart" class="w-5 h-5 mr-2" />
-        На авторынок
-      </router-link>
+      <div class="flex flex-wrap justify-center gap-3">
+        <button
+          v-if="cars.length > 0 && activeTab !== 'all'"
+          @click="activeTab = 'all'"
+          class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition-colors flex items-center"
+        >
+          <Icon icon="mdi:view-dashboard" class="w-5 h-5 mr-2" />
+          Все автомобили
+        </button>
+
+        <router-link
+          to="/market"
+          class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg inline-flex items-center transition-colors"
+        >
+          <Icon icon="mdi:cart" class="w-5 h-5 mr-2" />
+          На авторынок
+        </router-link>
+      </div>
     </div>
 
     <!-- Модальное окно выставления на продажу -->
@@ -347,14 +399,25 @@ import BalanceBadge from "../components/BalanceBadge.vue";
 import { Icon } from "@iconify/vue";
 
 const router = useRouter();
-const searchQuery = ref("");
-const showFilters = ref(false);
 
-// Фильтры
-const filters = ref({
-  status: "",
-  sort: "popular",
-});
+// Опции табов
+const tabs = [
+  { label: "Все", value: "all", icon: "mdi:view-dashboard" },
+  { label: "Готовы к продаже", value: "ready", icon: "mdi:car-estate" },
+  { label: "На продаже", value: "selling", icon: "mdi:tag" },
+  { label: "На ремонте", value: "repair", icon: "mdi:car-wrench" },
+];
+const activeTab = ref("all");
+
+// Опции сортировки с короткими вариантами для мобильных
+const sortOptions = [
+  { label: "Популярность", value: "popular" },
+  { label: "Цена ↓", value: "price-desc" },
+  { label: "Цена ↑", value: "price-asc" },
+  { label: "Состояние", value: "condition" },
+  { label: "Год выпуска", value: "year" },
+];
+const selectedSort = ref("popular");
 
 // Модальное окно продажи
 const sellModal = reactive({
@@ -441,31 +504,32 @@ const cars = ref<Car[]>([
   },
 ]);
 
-// Отфильтрованные автомобили
+// Отфильтрованные автомобили по табу и сортировке
 const filteredCars = computed(() => {
+  // Фильтрация по статусу (табу)
   let result = [...cars.value];
-
-  // Поиск по запросу
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    result = result.filter(
-      (car) =>
-        car.brand.toLowerCase().includes(query) || car.model.toLowerCase().includes(query)
-    );
-  }
-
-  // Фильтр по статусу
-  if (filters.value.status) {
-    result = result.filter((car) => car.status === filters.value.status);
+  if (activeTab.value !== "all") {
+    result = result.filter((car) => car.status === activeTab.value);
   }
 
   // Сортировка
-  switch (filters.value.sort) {
+  switch (selectedSort.value) {
+    case "price-desc":
+      result.sort((a, b) => {
+        const aPrice = a.status === "selling" ? a.price || a.marketValue : a.marketValue;
+        const bPrice = b.status === "selling" ? b.price || b.marketValue : b.marketValue;
+        return bPrice - aPrice;
+      });
+      break;
+    case "price-asc":
+      result.sort((a, b) => {
+        const aPrice = a.status === "selling" ? a.price || a.marketValue : a.marketValue;
+        const bPrice = b.status === "selling" ? b.price || b.marketValue : b.marketValue;
+        return aPrice - bPrice;
+      });
+      break;
     case "condition":
       result.sort((a, b) => b.condition - a.condition);
-      break;
-    case "value":
-      result.sort((a, b) => b.marketValue - a.marketValue);
       break;
     case "year":
       result.sort((a, b) => b.year - a.year);
@@ -483,6 +547,25 @@ const filteredCars = computed(() => {
 const totalMarketValue = computed(() => {
   return cars.value.reduce((total, car) => total + car.marketValue, 0);
 });
+
+// Получение количества автомобилей для каждого таба
+const getTabCount = (tabValue: string) => {
+  if (tabValue === "all") return cars.value.length;
+  return cars.value.filter((car) => car.status === tabValue).length;
+};
+
+// Получение правильного окончания слова "автомобиль"
+const getCarWord = (count: number) => {
+  if (count % 10 === 1 && count % 100 !== 11) return "ь";
+  if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) return "я";
+  return "ей";
+};
+
+// Получение названия активного таба
+const getActiveTabLabel = () => {
+  const tab = tabs.find((t) => t.value === activeTab.value);
+  return tab ? tab.label : "";
+};
 
 // Форматирование пробега с разделением тысяч
 const formatMileage = (mileage: number) => {
@@ -562,3 +645,34 @@ const cancelSale = (car: Car) => {
   car.sellingStartDate = undefined;
 };
 </script>
+
+<style scoped>
+/* Стили для лучшего отображения на мобильных устройствах */
+select {
+  /* Предотвращает изменение размера шрифта на мобильных устройствах */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-size: 14px;
+}
+
+/* Прячем стрелку нативного селекта в Safari на iOS */
+select {
+  -webkit-appearance: none;
+}
+
+/* Улучшение touch-target для мобильных устройств */
+button,
+select {
+  min-height: 44px;
+}
+
+@media (max-width: 640px) {
+  /* Стили для мобильных устройств */
+  .text-lg {
+    font-size: 1rem;
+  }
+  .text-sm {
+    font-size: 0.75rem;
+  }
+}
+</style>
